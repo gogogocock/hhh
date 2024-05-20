@@ -1,0 +1,679 @@
+local UserInputService = game:GetService("UserInputService");
+local RunService = game:GetService("RunService");
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer;
+local bass = workspace.CurrentCamera;
+local Mouse = LocalPlayer:GetMouse()
+local pussy = Drawing.new("Circle")
+local mio = false
+local newVector2, newColor3, newDrawing = Vector2.new, Color3.new, Drawing.new;
+local tan, rad = math.tan, math.rad;
+local round = function(...) local a = {}; for i,v in next, table.pack(...) do a[i] = math.round(v); end return unpack(a); end;
+local wtvp = function(...) local a, b = bass.WorldToViewportPoint(bass, ...) return newVector2(a.X, a.Y), b, a.Z end;
+local folder = Instance.new("Folder")
+folder.Parent = game.Workspace
+folder.Name = "yeazus"
+local rep = game.ReplicatedStorage.ViewModels
+local yzs = game.Workspace.yeazus
+rep.DV2.Item.ItemRoot.SurfaceAppearance.Name = "DV2"
+
+
+
+local settings = {
+    fovft = false,
+    originalfov = game.Workspace.Camera.FieldOfView,
+    fov = false,
+    radius = 0,
+    box = 0,
+    boxcolor = Color3.fromRGB(255,255,255),
+    sky = "",
+    ambient = Color3.fromRGB(255, 255, 255),
+    top = Color3.fromRGB(255, 255, 255),
+    bottom = Color3.fromRGB(255, 255, 255),
+    cross = false,
+    viewmodelX = Vector3.new(),
+    viewmodelY = Vector3.new(),
+    fovcamera = 0,
+    inventory = false,
+    distance = false,
+    crosscolor = Color3.fromRGB(255, 255, 255),
+    gunss = false,
+    gunsscolor = Color3.fromRGB(255, 255, 255),
+    gunmaterial = "SmoothPlastic",
+}
+
+RunService.RenderStepped:Connect(function()
+    if settings.gunss == true and mio == false then
+        rep.DV2.Item.ItemRoot.DV2.Parent = yzs
+        mio = true
+    elseif settings.gunss == false and mio == true then
+        yzs.DV2.Parent = rep.DV2.Item.ItemRoot
+        mio = false
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if settings.gunss == true then
+        rep.DV2.Item.ItemRoot.Material = settings.gunmaterial
+        rep.PPSH41.Item.ItemRootModel.PPSH41.Material = settings.gunsscolors
+        rep.PPSH41.Item.ItemRoot.PPSH42.Material = settings.gunmaterial
+        rep.PPSH41.Item.DustCover.PPSH43.Material = settings.gunmaterial
+        rep.PPSH41.Item.BoltModel.PPSH44.Material = settings.gunmaterial
+        rep.PPSH41.Item.Bolt.PPSH45.Material = settings.gunmaterial
+        rep.VZ61.Item.ItemRoot.SurfaceAppearance.Material = settings.gunmaterial
+    end
+end)
+
+local espCache = {};
+local function createEsp(player)
+   local drawings = {};
+   
+   drawings.box = newDrawing("Square");
+   drawings.box.Thickness = 1;
+   drawings.box.Filled = false;
+   drawings.box.Color = settings.boxcolor
+   drawings.box.Visible = false;
+   drawings.box.ZIndex = 2;
+   drawings.box.Transparency = settings.box
+
+   drawings.boxoutline = newDrawing("Square");
+   drawings.boxoutline.Thickness = 3;
+   drawings.boxoutline.Filled = false;
+   drawings.boxoutline.Color = newColor3();
+   drawings.boxoutline.Visible = false;
+   drawings.boxoutline.ZIndex = 1;
+   drawings.boxoutline.Transparency = settings.box
+
+   espCache[player] = drawings;
+end
+
+
+ local function removeEsp(player)
+	if rawget(espCache, player) then
+		for _, drawing in next, espCache[player] do
+			drawing:Remove();
+		end
+		espCache[player] = nil;
+	end
+ end
+ 
+ local function updateEsp(player, esp)
+	local character = player and player.Character;
+	if character then
+		local cframe = character:GetModelCFrame();
+		local position, visible, depth = wtvp(cframe.Position);
+		esp.box.Visible = visible;
+		esp.boxoutline.Visible = visible;
+ 
+		if cframe and visible then
+			local scaleFactor = 1 / (depth * tan(rad(bass.FieldOfView / 2)) * 2) * 1000;
+			local width, height = round(4 * scaleFactor, 5 * scaleFactor);
+			local x, y = round(position.X, position.Y);
+ 
+			esp.box.Size = newVector2(width, height);
+			esp.box.Position = newVector2(round(x - width / 2, y - height / 2));
+			esp.box.Color = settings.boxcolor;
+            esp.box.Transparency = settings.box
+ 
+			esp.boxoutline.Size = esp.box.Size;
+			esp.boxoutline.Position = esp.box.Position;
+            esp.boxoutline.Transparency = settings.box
+		end
+	else
+		esp.box.Visible = false;
+		esp.boxoutline.Visible = false;
+	end
+ end
+
+ for _, player in next, Players:GetPlayers() do
+	if player ~= LocalPlayer then
+		createEsp(player);
+	end
+ end
+ 
+ Players.PlayerAdded:Connect(function(player)
+	createEsp(player);
+ end);
+ 
+ Players.PlayerRemoving:Connect(function(player)
+	removeEsp(player);
+ end)
+ 
+ RunService:BindToRenderStep("esp", Enum.RenderPriority.Camera.Value, function()
+	for player, drawings in next, espCache do 
+        local character = player and player.Character
+		if drawings and player ~= LocalPlayer then
+			updateEsp(player, drawings);
+        end
+     end
+end)
+
+
+local function createESP(player)
+    local function onCharacterAdded(character)
+        -- Wait for the HumanoidRootPart
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+        -- Create a BillboardGui
+        local billboardGui = Instance.new("BillboardGui")
+        billboardGui.Name = "DistanceESP"
+        billboardGui.Size = UDim2.new(0, 80, 0, 40) -- Size for the ESP display
+        billboardGui.StudsOffset = Vector3.new(0, 4, 0) -- Adjusted to be above the player's head
+        billboardGui.AlwaysOnTop = true
+
+        -- Create a TextLabel
+        local textLabel = Instance.new("TextLabel")
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.TextStrokeTransparency = 0 -- Fully opaque text stroke
+        textLabel.TextStrokeColor3 = Color3.new(0, 0, 0) -- Black outline
+        textLabel.TextScaled = true
+        textLabel.TextSize = 10 -- Text size for visibility
+        textLabel.Font = Enum.Font.Jura -- Set font to SourceSansBold
+        textLabel.Parent = billboardGui
+
+        -- Parent the BillboardGui to the player's HumanoidRootPart
+        billboardGui.Parent = humanoidRootPart
+
+        -- Update the distance text
+        local connection
+        connection = RunService.RenderStepped:Connect(function()
+            if settings.distance and character and character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local distance = (LocalPlayer.Character.HumanoidRootPart.Position - humanoidRootPart.Position).Magnitude
+                textLabel.Text = string.format("%.1f meters", distance)
+                textLabel.TextColor3 = settings.boxcolor
+                textLabel.Visible = settings.box
+            else
+                textLabel.Visible = false
+            end
+
+            -- Disconnect the event if the character is removed
+            if not character or not character.Parent then
+                connection:Disconnect()
+            end
+        end)
+    end
+
+    -- Connect the function to the player's character
+    player.CharacterAdded:Connect(onCharacterAdded)
+
+    -- If the player already has a character, add the ESP immediately
+    if player.Character then
+        onCharacterAdded(player.Character)
+    end
+end
+
+-- Add ESP to all players
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        createESP(player)
+    end
+end
+
+-- Connect the createESP function to new players joining the game
+Players.PlayerAdded:Connect(function(player)
+    if player ~= LocalPlayer then
+        createESP(player)
+    end
+end)
+
+local outlineThickness = 1
+local gapSize = 10
+
+local function createCrosshair()
+    -- Create a Line object for the horizontal line
+    local horizontalLineLeft = Drawing.new("Line")
+    horizontalLineLeft.Color = Color3.new(0, 0, 0) -- Black color for the outline
+    horizontalLineLeft.Thickness = 2 + outlineThickness -- Thickness adjusted for the outline
+
+    local horizontalLineRight = Drawing.new("Line")
+    horizontalLineRight.Color = Color3.new(0, 0, 0)
+    horizontalLineRight.Thickness = 2 + outlineThickness
+
+    local horizontalLineLeftMain = Drawing.new("Line") -- Main line
+    horizontalLineLeftMain.Thickness = 2 -- Normal thickness for the main line
+
+    local horizontalLineRightMain = Drawing.new("Line")
+    horizontalLineRightMain.Thickness = 2
+
+    -- Create a Line object for the vertical line
+    local verticalLineTop = Drawing.new("Line")
+    verticalLineTop.Color = Color3.new(0, 0, 0)
+    verticalLineTop.Thickness = 2 + outlineThickness
+
+    local verticalLineBottom = Drawing.new("Line")
+    verticalLineBottom.Color = Color3.new(0, 0, 0)
+    verticalLineBottom.Thickness = 2 + outlineThickness
+
+    local verticalLineTopMain = Drawing.new("Line")
+    verticalLineTopMain.Thickness = 2
+
+    local verticalLineBottomMain = Drawing.new("Line")
+    verticalLineBottomMain.Thickness = 2
+
+    -- Function to update the crosshair position
+    local function updateCrosshair(mousePosition)
+        local halfLength = 20 -- Length of each line segment
+        local halfGap = gapSize / 2 -- Half of the gap size
+
+        -- Set position for horizontal lines
+        horizontalLineLeft.From = Vector2.new(mousePosition.X - halfLength - outlineThickness, mousePosition.Y)
+        horizontalLineLeft.To = Vector2.new(mousePosition.X - halfGap, mousePosition.Y)
+
+        horizontalLineRight.From = Vector2.new(mousePosition.X + halfGap, mousePosition.Y)
+        horizontalLineRight.To = Vector2.new(mousePosition.X + halfLength + outlineThickness, mousePosition.Y)
+
+        horizontalLineLeftMain.From = Vector2.new(mousePosition.X - halfLength, mousePosition.Y)
+        horizontalLineLeftMain.To = Vector2.new(mousePosition.X - halfGap, mousePosition.Y)
+
+        horizontalLineRightMain.From = Vector2.new(mousePosition.X + halfGap, mousePosition.Y)
+        horizontalLineRightMain.To = Vector2.new(mousePosition.X + halfLength, mousePosition.Y)
+
+        -- Set position for vertical lines
+        verticalLineTop.From = Vector2.new(mousePosition.X, mousePosition.Y - halfLength - outlineThickness)
+        verticalLineTop.To = Vector2.new(mousePosition.X, mousePosition.Y - halfGap)
+
+        verticalLineBottom.From = Vector2.new(mousePosition.X, mousePosition.Y + halfGap)
+        verticalLineBottom.To = Vector2.new(mousePosition.X, mousePosition.Y + halfLength + outlineThickness)
+
+        verticalLineTopMain.From = Vector2.new(mousePosition.X, mousePosition.Y - halfLength)
+        verticalLineTopMain.To = Vector2.new(mousePosition.X, mousePosition.Y - halfGap)
+
+        verticalLineBottomMain.From = Vector2.new(mousePosition.X, mousePosition.Y + halfGap)
+        verticalLineBottomMain.To = Vector2.new(mousePosition.X, mousePosition.Y + halfLength)
+    end
+
+    -- Connect the update function to the RenderStepped event
+    RunService.RenderStepped:Connect(function()
+        horizontalLineRight.Visible = settings.cross
+        horizontalLineLeft.Visible = settings.cross
+        horizontalLineLeftMain.Visible = settings.cross
+        horizontalLineRightMain.Visible = settings.cross
+        verticalLineTop.Visible = settings.cross
+        verticalLineTopMain.Visible = settings.cross
+        verticalLineBottom.Visible = settings.cross
+        verticalLineTop.Visible = settings.cross
+--color
+        horizontalLineLeftMain.Color = settings.crosscolor
+        horizontalLineRightMain.Color = settings.crosscolor
+        verticalLineTopMain.Color = settings.crosscolor
+        verticalLineBottom.Color = settings.crosscolor
+        local mousePosition = UserInputService:GetMouseLocation()
+        updateCrosshair(mousePosition)
+    end)
+end
+
+-- Call the function to create the crosshair
+createCrosshair()
+
+
+RunService.RenderStepped:Connect(function()
+    local mouseLocation = UserInputService:GetMouseLocation();
+    pussy.Position = Vector2.new(mouseLocation.X, mouseLocation.Y)
+    pussy.Thickness = 3
+    pussy.NumSides = 100
+    pussy.Radius = settings.radius * 3.6 
+    pussy.Visible = settings.fov
+end)
+local function duhh()
+    local YZSKY = Instance.new("Sky")
+    YZSKY.Name = "YZSKI"
+    YZSKY.Parent = game.Lighting
+end
+duhh()
+
+local YZSKI = game.Lighting.YZSKI
+local light = game.Lighting
+
+RunService.RenderStepped:Connect(function()
+    light.Ambient = settings.ambient
+    light.ColorShift_Top = settings.top
+    light.ColorShift_Bottom = settings.bottom
+    if settings.sky == "Space" then
+        YZSKI.SkyboxBk = "http://www.roblox.com/asset/?id=159248188"
+        YZSKI.SkyboxDn = "http://www.roblox.com/asset/?id=159248183"
+        YZSKI.SkyboxFt = "http://www.roblox.com/asset/?id=159248187"
+        YZSKI.SkyboxLf = "http://www.roblox.com/asset/?id=159248173"
+        YZSKI.SkyboxRt = "http://www.roblox.com/asset/?id=159248192"
+        YZSKI.SkyboxUp = "http://www.roblox.com/asset/?id=159248176"
+    elseif settings.sky == "Morning" then
+        YZSKI.SkyboxBk = "rbxassetid://2013200017"
+        YZSKI.SkyboxDn = "rbxassetid://2013199657"
+        YZSKI.SkyboxFt = "rbxassetid://2013199308"
+        YZSKI.SkyboxLf = "rbxassetid://2013198619"
+        YZSKI.SkyboxRt = "rbxassetid://2013198958"
+        YZSKI.SkyboxUp = "rbxassetid://2013200265"
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if settings.fovft == true then
+        RunService.RenderStepped:Connect(function()
+            if settings.fovcamera > 1 then
+                game.Workspace.Camera.FieldOfView = settings.fovcamera * 1.2
+            else
+                game.Workspace.Camera.FieldOfView = settings.originalfov
+            end
+        end)
+        else
+            game.Workspace.Camera.FieldOfView = settings.originalfov
+    end
+end)
+
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/drillygzzly/Roblox-UI-Libs/main/1%20Tokyo%20Lib%20(FIXED)/Tokyo%20Lib%20Source.lua"))({
+    cheatname = "Test", -- watermark text
+    gamename = "Test", -- watermark text
+})
+
+library:init()
+
+local Window1  = library.NewWindow({
+    title = "Test | KILL NIGGAS", -- Mainwindow Text
+    size = UDim2.new(0, 510, 0.6, 6
+)})
+
+local Tab1 = Window1:AddTab("  AIM  ")
+local Tab2 = Window1:AddTab("  VISIUAL  ")
+local SettingsTab = library:CreateSettingsTab(Window1)
+
+--Tab1:SetText("Text")
+local Section1 = Tab1:AddSection("Main", 1)
+local qSection1 = Tab2:AddSection("Main", 1)
+--Section1:SetText("Text")
+
+Section1:AddToggle({
+    text = "Aimbot",
+    state = false,
+    risky = true,
+    tooltip = "tooltip1",
+    flag = "Toggle_1",
+    risky = false,
+    callback = function(v)
+    end
+}):AddBind({
+    enabled = true,
+    text = "Keybind1",
+    tooltip = "tooltip1",
+    mode = "toggle",
+    bind = "None",
+    flag = "ToggleKey_1",
+    state = false,
+    nomouse = false,
+    risky = false,
+    noindicator = false,
+    callback = function(v)
+        print(ValueText, v)
+    end,
+    keycallback = function(v)
+        print(ValueText, v)
+    end
+})
+
+Section1:AddToggle({
+    text = "FOV",
+    state = false,
+    risky = true,
+    tooltip = "tooltip1",
+    flag = "Toggle_1",
+    risky = false,
+    callback = function(v)
+        settings.fov = v
+    end
+}):AddBind({
+    enabled = true,
+    text = "Keybind1",
+    tooltip = "tooltip1",
+    mode = "toggle",
+    bind = "None",
+    flag = "ToggleKey_1",
+    state = false,
+    nomouse = false,
+    risky = false,
+    noindicator = false,
+    callback = function(v)
+        print(v)
+    end,
+    keycallback = function(v)
+        print(v)
+    end
+})
+
+Section1:AddSlider({
+    enabled = true,
+    text = "Radius",
+    tooltip = "tooltip1",
+    flag = "Slider_1",
+    suffix = "",
+    dragging = true,
+    focused = false,
+    min = 0,
+    max = 100,
+    increment = 0.1,
+    risky = false,
+    callback = function(v)
+        settings.radius = v
+    end
+})
+Section1:AddToggle({
+    text = "Fov",
+    state = false,
+    risky = true,
+    tooltip = "tooltip1",
+    flag = "Toggle_1",
+    risky = false,
+    callback = function(v)
+        settings.fovft = v
+    end
+}):AddBind({
+    enabled = true,
+    text = "Keybind1",
+    tooltip = "tooltip1",
+    mode = "toggle",
+    bind = "None",
+    flag = "ToggleKey_1",
+    state = false,
+    nomouse = false,
+    risky = false,
+    noindicator = false,
+    callback = function(v)
+        settings.fovft = v
+    end,
+    keycallback = function(v)
+        settings.fovft = v
+    end
+})
+
+Section1:AddSlider({
+    enabled = true,
+    text = "FOV",
+    tooltip = "tooltip1",
+    flag = "Slider_1",
+    suffix = "",
+    dragging = true,
+    focused = false,
+    min = 0,
+    max = 100,
+    increment = 0.1,
+    risky = false,
+    callback = function(v)
+        settings.fovcamera = v
+    end
+})
+
+qSection1:AddToggle({
+    text = "Box",
+    state = false,
+    risky = true,
+    tooltip = "tooltip1",
+    flag = "Toggle_1",
+    risky = false,
+    callback = function(v)
+        if v == true then
+            settings.box = 1
+        elseif v == false then
+            settings.box = 0
+        end
+        print(settings.box)
+    end
+})
+
+qSection1:AddToggle({
+    text = "Distance",
+    state = false,
+    risky = true,
+    tooltip = "tooltip1",
+    flag = "Toggle_1",
+    risky = false,
+    callback = function(v)
+        settings.distance = v
+    end
+})
+
+qSection1:AddColor({
+    enabled = true,
+    text = "Color",
+    tooltip = "tooltip1",
+    color = Color3.fromRGB(255, 255, 255),
+    flag = "Color_1",
+    trans = 0,
+    open = false,
+    risky = false,
+    callback = function(v)
+        settings.boxcolor = v
+    end
+})
+
+qSection1:AddList({
+    enabled = true,
+    text = "Sky", 
+    selected = "",
+    multi = false,
+    open = false,
+    max = 4,
+    values = {"Space", "Morning", "Night"},
+    risky = false,
+    callback = function(v)
+        settings.sky = v
+    end
+})
+
+qSection1:AddColor({
+    enabled = true,
+    text = "Ambient",
+    tooltip = "tooltip1",
+    color = Color3.fromRGB(255, 255, 255),
+    flag = "Color_1",
+    trans = 0,
+    open = false,
+    risky = false,
+    callback = function(v)
+        settings.ambient = v
+    end
+})
+
+qSection1:AddColor({
+    enabled = true,
+    text = "ColorShiftTop",
+    tooltip = "tooltip1",
+    color = Color3.fromRGB(255, 255, 255),
+    flag = "Color_1",
+    trans = 0,
+    open = false,
+    risky = false,
+    callback = function(v)
+        settings.top = v
+    end
+})
+
+qSection1:AddColor({
+    enabled = true,
+    text = "ColorShiftBottom",
+    tooltip = "tooltip1",
+    color = Color3.fromRGB(255, 255, 255),
+    flag = "Color_1",
+    trans = 0,
+    open = false,
+    risky = false,
+    callback = function(v)
+        settings.bottom = v
+    end
+})
+qSection1:AddToggle({
+    text = "CrossHair",
+    state = false,
+    risky = true,
+    tooltip = "tooltip1",
+    flag = "Toggle_1",
+    risky = false,
+    callback = function(v)
+        settings.cross = v
+    end
+})
+qSection1:AddColor({
+    enabled = true,
+    text = "Crosshair",
+    tooltip = "tooltip1",
+    color = Color3.fromRGB(255, 255, 255),
+    flag = "Color_1",
+    trans = 0,
+    open = false,
+    risky = false,
+    callback = function(v)
+        settings.crosscolor = v
+    end
+})
+
+qSection1:AddToggle({
+    text = "Gun Customization",
+    state = false,
+    risky = true,
+    tooltip = "tooltip1",
+    flag = "Toggle_1",
+    risky = false,
+    callback = function(v)
+        settings.gunss = v
+    end
+})
+qSection1:AddColor({
+    enabled = true,
+    text = "Gun Color",
+    tooltip = "tooltip1",
+    color = Color3.fromRGB(255, 255, 255),
+    flag = "Color_1",
+    trans = 0,
+    open = false,
+    risky = false,
+    callback = function(v)
+        settings.gunsscolor = v
+    end
+})
+qSection1:AddList({
+    enabled = true,
+    text = "Gun Material", 
+    selected = "",
+    multi = false,
+    open = false,
+    max = 4,
+    values = {"Neon", "ForceField", "SmoothPlastic","Wood","Metal"},
+    risky = false,
+    callback = function(v)
+        settings.gunmaterial = v
+    end
+})
+
+
+
+
+
+local Time = (string.format("%."..tostring(Decimals).."f", os.clock() - Clock))
+library:SendNotification(("Loaded In "..tostring(Time)), 6)
+
+--[[
+    --Window1:SetOpen(false)
+    makefolder("Title Here")
+    library:SetTheme(Default)
+    library:GetConfig(Default)
+    library:LoadConfig(Default)
+    library:SaveConfig(Default)
+]]
+
